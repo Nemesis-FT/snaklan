@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://cdn.tailwindcss.com?plugins=forms,typography,aspect-ratio,line-clamp"></script>
+    <style>
+        canvas {
+            width: 100vw;
+            height: 100vh;
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            z-index: -9999;
+        }
+    </style>
+
+
+    <style>
+        body {
+            margin: 0;
+        }
+    </style>
+<body class="bg-neutral-900">
+
+
+<div class="px-6 py-4 ring-1 ring-slate-900/5">
+    <div class="flex flex-wrap -mx-3 mb-6 items-start">
+        <div class="mx-4">
+            <select id="cards"
+                    class="bg-orange-50 border border-orange-300 text-orange-900 text-sm rounded-lg focus:ring-yellow-500 focus:border-yellow-500 block w-full p-2.5"
+                    style="padding-right: 2rem;"
+            >
+                <option value="Marco">Cucciolo 82</option>
+                <option value="Axel">Axel77</option>
+                <option value="Luigi">Costanzo</option>
+                <option value="Mario">Akkiappau</option>
+                <option value="Guido">Gemmacerata</option>
+                <option value="Manuel">Maverick84</option>
+            </select>
+        </div>
+        <div>
+            <button onclick="load_bio()"
+                    class="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded">
+                Bio
+            </button>
+        </div>
+        <div class="mx-4">
+            <button data-te-toggle="modal" data-te-target="#exampleModal"
+                    onclick="document.getElementById('classifica_div').hidden=!document.getElementById('classifica_div').hidden"
+                    class="bg-transparent hover:bg-orange-500 text-orange-700 font-semibold hover:text-white py-2 px-4 border border-orange-500 hover:border-transparent rounded">
+                Albo d'oro
+            </button>
+        </div>
+
+    </div>
+    <div hidden id="bio_div">
+        <div id="bio"
+             class="px-6 py-4 rounded-lg bg-neutral-700 ring-1 ring-slate-900/5 m-4 opacity-75 text-white border border-orange-500">
+
+        </div>
+    </div>
+    <div hidden id="classifica_div">
+        <div id="classifica"
+             class="px-6 py-4 rounded-lg bg-neutral-700 ring-1 ring-slate-900/5 m-4 opacity-75 text-white border border-orange-500">
+
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+
+    function load_scores() {
+        fetch("./classifica.json").then((response) => response.json()).then((json) => {
+            console.debug(json)
+            document.getElementById("classifica").innerText = json.classifica
+        })
+    }
+
+    load_scores()
+</script>
+
+<script>
+    function load_bio() {
+
+        fetch("./bios.json").then((response) => response.json()).then((json) => {
+            console.debug(json)
+            let select = document.getElementById("cards")
+            let value = select.value
+            let bio = ""
+            switch (value) {
+                case "Marco":
+                    bio = json.Marco
+                    break;
+                case "Axel":
+                    bio = json.Axel
+                    break;
+                case "Luigi":
+                    bio = json.Luigi
+                    break;
+                case "Mario":
+                    bio = json.Mario
+                    break;
+                case "Guido":
+                    bio = json.Guido
+                    break;
+                case "Manuel":
+                    bio = json.Manuel
+                    break;
+            }
+            document.getElementById('bio_div').hidden = !document.getElementById('bio_div').hidden
+            document.getElementById("bio").innerText = bio
+        })
+
+    }
+</script>
+
+<script type="module">
+
+    import * as THREE from 'https://cdn.skypack.dev/three@0.129.0/build/three.module.js';
+    import {OrbitControls} from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/controls/OrbitControls.js';
+    import {ColladaLoader} from 'https://cdn.skypack.dev/three@0.129.0/examples/jsm/loaders/ColladaLoader.js';
+
+    export function render_card() {
+
+        let canvas = document.getElementsByTagName("canvas")
+        console.debug(canvas)
+        if (canvas.length !== 0) {
+            document.body.removeChild(canvas[0])
+        }
+
+        const scene = new THREE.Scene();
+        const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+
+        const renderer = new THREE.WebGLRenderer();
+
+        renderer.setSize(window.innerWidth, window.innerHeight);
+        document.body.appendChild(renderer.domElement);
+        const light = new THREE.AmbientLight(0xFFFFFF); // soft white light
+        scene.add(light);
+
+        const loader = new ColladaLoader();
+        let obj;
+
+        loader.load(
+            // resource URL
+            'models/CartaMarco.dae',
+            // called when resource is loaded
+            function (object) {
+                scene.add(object.scene);
+                obj = object
+            },
+            // called when loading is in progresses
+            function (xhr) {
+                console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+            },
+            // called when loading has errors
+            function (error) {
+                console.log('An error happened');
+            }
+        );
+        camera.position.z = 5;
+        const controls = new OrbitControls(camera, renderer.domElement);
+        controls.minPolarAngle = Math.PI / 2;
+        controls.maxPolarAngle = Math.PI / 2;
+
+        function animate() {
+            requestAnimationFrame(animate);
+
+            renderer.render(scene, camera);
+        }
+
+        animate()
+        window.addEventListener('resize', onWindowResize, false);
+
+        function onWindowResize() {
+
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+
+            renderer.setSize(window.innerWidth, window.innerHeight);
+
+        }
+
+        let select = document.getElementById("cards")
+        select.addEventListener('change', onCardChange, false)
+
+        function onCardChange() {
+            document.getElementById('bio_div').hidden = true
+            let select = document.getElementById("cards")
+            let value = select.value
+            let model = ""
+            switch (value) {
+                case "Marco":
+                    model = "models/CartaMarco.dae"
+                    break;
+                case "Axel":
+                    model = "models/CartaAxel.dae"
+                    break;
+                case "Luigi":
+                    model = "models/CartaLuigi.dae"
+                    break;
+                case "Mario":
+                    model = "models/CartaMario.dae"
+                    break;
+                case "Guido":
+                    model = "models/CartaGuido.dae"
+                    break;
+                case "Manuel":
+                    model = "models/CartaManuel.dae"
+                    break;
+            }
+            scene.clear()
+            const loader = new ColladaLoader();
+            let obj;
+
+            loader.load(
+                // resource URL
+                model,
+                // called when resource is loaded
+                function (object) {
+                    scene.add(object.scene);
+                    obj = object
+                },
+                // called when loading is in progresses
+                function (xhr) {
+                    console.log((xhr.loaded / xhr.total * 100) + '% loaded');
+                },
+                // called when loading has errors
+                function (error) {
+                    console.log('An error happened');
+                }
+            );
+            const light = new THREE.AmbientLight(0xFFFFFF); // soft white light
+            scene.add(light);
+        }
+
+    }
+
+    render_card()
+
+</script>
+</body>
+
+</html>
